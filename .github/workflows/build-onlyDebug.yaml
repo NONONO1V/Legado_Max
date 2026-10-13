@@ -1,15 +1,13 @@
 name: Build Debug APK
 
 on:
-  # 推送到 test 或 build/max-apk 分支时触发（build/max-apk 用于单独出 Max 安装包）
+  # 只有当代码推送到 test 分支，或者提交 PR 到 test 分支时才会触发
   push:
     branches:
       - test
-      - build/max-apk
   pull_request:
     branches:
       - test
-      - build/max-apk
 
 # 同一个分支连续 push 时，取消旧任务，节省资源
 concurrency:
