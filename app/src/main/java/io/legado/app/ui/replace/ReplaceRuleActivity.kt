@@ -19,10 +19,10 @@ import io.legado.app.data.appDb
 import io.legado.app.data.entities.ReplaceRule
 import io.legado.app.databinding.ActivityReplaceRuleBinding
 import io.legado.app.databinding.DialogEditTextBinding
-import io.legado.app.help.DirectLinkUpload
 import io.legado.app.help.book.ContentProcessor
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.lib.dialogs.alert
+import io.legado.app.lib.theme.eInkGrayscale
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.lib.theme.primaryTextColor
 import io.legado.app.ui.association.ImportReplaceRuleDialog
@@ -63,7 +63,8 @@ import kotlinx.coroutines.launch
 /**
  * 替换规则管理
  */
-class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRuleViewModel>(),
+class ReplaceRuleActivity :
+    VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRuleViewModel>(),
     SearchView.OnQueryTextListener,
     PopupMenu.OnMenuItemClickListener,
     SelectActionBar.CallBack,
@@ -95,9 +96,9 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
         }
     }
     private val exportResult = registerForActivityResult(HandleFileContract()) {
-ExportResultHandler.handleExportResult(this, it, { text ->
-sendToClip(text)
-}, StringUtils.REPLACE_RULE)
+        ExportResultHandler.handleExportResult(this, it, { text ->
+            sendToClip(text)
+        }, StringUtils.REPLACE_RULE)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -279,7 +280,7 @@ sendToClip(text)
                 fileData = HandleFileContract.FileData(
                     "exportReplaceRule.json",
                     GSON.toJson(adapter.selection).toByteArray(),
-                    "application/json"
+                    "application/json",
                 )
             }
         }
@@ -333,7 +334,9 @@ sendToClip(text)
     private fun upGroupMenu() = groupMenu?.transaction { menu ->
         menu.removeGroup(R.id.replace_group)
         groups.forEach {
-            menu.add(R.id.replace_group, Menu.NONE, Menu.NONE, it)
+            // 分组名是用户自定义的（可能带表情符号），且这个下拉是 AppCompat 自己开的窗口，
+            // 挂不了整层灰阶，只能把标题本身按灰阶绘制（见 CharSequence.eInkGrayscale）
+            menu.add(R.id.replace_group, Menu.NONE, Menu.NONE, it.eInkGrayscale())
         }
     }
 
@@ -357,7 +360,7 @@ sendToClip(text)
                     startActivity<WebViewActivity> {
                         putExtra("url", url)
                     }
-                }
+                },
             )
             customView { alertBinding.root }
             okButton {
@@ -368,7 +371,7 @@ sendToClip(text)
                         aCache.put(importRecordKey, cacheUrls.joinToString(","))
                     }
                     showDialogFragment(
-                        ImportReplaceRuleDialog(it)
+                        ImportReplaceRuleDialog(it),
                     )
                 }
             }
@@ -381,9 +384,7 @@ sendToClip(text)
         return false
     }
 
-    override fun onQueryTextSubmit(query: String?): Boolean {
-        return false
-    }
+    override fun onQueryTextSubmit(query: String?): Boolean = false
 
     override fun onDestroy() {
         super.onDestroy()
@@ -393,7 +394,7 @@ sendToClip(text)
     override fun upCountView() {
         binding.selectActionBar.upCountView(
             adapter.selection.size,
-            adapter.itemCount
+            adapter.itemCount,
         )
     }
 

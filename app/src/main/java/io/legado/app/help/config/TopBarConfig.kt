@@ -3,7 +3,6 @@ package io.legado.app.help.config
 import android.content.Context
 import android.graphics.Color
 import androidx.annotation.Keep
-import androidx.core.content.ContextCompat
 import io.legado.app.R
 import io.legado.app.constant.PreferKey
 import io.legado.app.lib.theme.primaryColor
@@ -33,8 +32,10 @@ object TopBarConfig {
 
     /** 默认配置目录名 */
     const val DEFAULT_DIR_NAME = "default"
+
     /** 样式：默认（跟随主题） */
     const val STYLE_DEFAULT = "default"
+
     /** 样式：常规（独立背景/圆角） */
     const val STYLE_REGULAR = "regular"
 
@@ -47,6 +48,9 @@ object TopBarConfig {
 
     private const val activeDayKey = PreferKey.topBarPackageDay
     private const val activeNightKey = PreferKey.topBarPackageNight
+
+    /** 顶栏宽高比的经验估计（手机顶栏约 4:1 ~ 7:1，取中间值）：用来估计壁纸纵向露出多少，见 [wallpaperAverageColor] */
+    private const val topBarAspectRatio = 5f
 
     /** [currentEntry] 的读取缓存：key 含日夜、目录名与快照文件签名 */
     private var cachedEntry: Pair<String, Entry>? = null
@@ -91,7 +95,7 @@ object TopBarConfig {
         var backgroundColor: Int? = null,
         var cornerScale: Float? = null,
         var expandFiltersByDefault: Boolean = false,
-        var updatedAt: Long = System.currentTimeMillis()
+        var updatedAt: Long = System.currentTimeMillis(),
     ) {
         fun toJson(): String = GSON.toJson(this)
     }
@@ -101,7 +105,7 @@ object TopBarConfig {
         val config: Config,
         val source: Source,
         val dirName: String,
-        val localDir: File? = null
+        val localDir: File? = null,
     )
 
     /** 配置来源类型：内置（默认）或本地（用户自定义） */
@@ -124,33 +128,27 @@ object TopBarConfig {
         var tagSelectedColor: Int? = null,
         var tagSelectedAlpha: Int = 100,
         var expandFiltersByDefault: Boolean = false,
-        var updatedAt: Long = System.currentTimeMillis()
+        var updatedAt: Long = System.currentTimeMillis(),
     )
 
     /** 创建默认配置 */
-    fun defaultConfig(context: Context, isNight: Boolean): Config {
-        return Config(
-            name = defaultName(isNight),
-            isNightMode = isNight,
-            tagBarColor = context.primaryColor,
-            tagSelectedColor = context.primaryColor,
-            backgroundColor = defaultBackgroundColor(isNight),
-            cornerScale = 1f,
-            updatedAt = 0L
-        )
-    }
+    fun defaultConfig(context: Context, isNight: Boolean): Config = Config(
+        name = defaultName(isNight),
+        isNightMode = isNight,
+        tagBarColor = context.primaryColor,
+        tagSelectedColor = context.primaryColor,
+        backgroundColor = defaultBackgroundColor(isNight),
+        cornerScale = 1f,
+        updatedAt = 0L,
+    )
 
     /** 获取当前激活的配置 */
-    fun currentConfig(context: Context, isNight: Boolean = AppConfig.isNightTheme): Config {
-        return currentEntry(context, isNight).config
-    }
+    fun currentConfig(context: Context, isNight: Boolean = AppConfig.isNightTheme): Config = currentEntry(context, isNight).config
 
     /** 获取当前激活的配置包目录名 */
-    fun activeDirName(isNight: Boolean): String {
-        return appCtx.getPrefString(if (isNight) activeNightKey else activeDayKey, DEFAULT_DIR_NAME)
-            ?.ifBlank { DEFAULT_DIR_NAME }
-            ?: DEFAULT_DIR_NAME
-    }
+    fun activeDirName(isNight: Boolean): String = appCtx.getPrefString(if (isNight) activeNightKey else activeDayKey, DEFAULT_DIR_NAME)
+        ?.ifBlank { DEFAULT_DIR_NAME }
+        ?: DEFAULT_DIR_NAME
 
     /** 生成当前配置签名，用于缓存失效判断 */
     fun currentSignature(isNight: Boolean): String {
@@ -223,7 +221,7 @@ object TopBarConfig {
             compareBy<Entry> { it.dirName != DEFAULT_DIR_NAME }
                 .thenByDescending { it.config.updatedAt }
                 .thenBy { it.config.name }
-                .thenBy { it.dirName }
+                .thenBy { it.dirName },
         )
     }
 
@@ -249,7 +247,7 @@ object TopBarConfig {
         val next = normalized.copy(
             name = name,
             wallpaperPath = normalizeWallpaperPath(normalized.wallpaperPath, dir),
-            updatedAt = System.currentTimeMillis()
+            updatedAt = System.currentTimeMillis(),
         )
         File(dir, packageFileName).writeText(GSON.toJson(next))
         clearCurrentCache()
@@ -263,14 +261,14 @@ object TopBarConfig {
             FileUtils.delete(activeLocalDir(entry.config.isNightMode), deleteRootDir = true)
             appCtx.putPrefString(
                 if (entry.config.isNightMode) activeNightKey else activeDayKey,
-                DEFAULT_DIR_NAME
+                DEFAULT_DIR_NAME,
             )
             return
         }
         writeActiveSnapshot(entry)
         appCtx.putPrefString(
             if (entry.config.isNightMode) activeNightKey else activeDayKey,
-            entry.dirName
+            entry.dirName,
         )
     }
 
@@ -305,7 +303,7 @@ object TopBarConfig {
             config.updatedAt = System.currentTimeMillis()
             val dirName = uniqueDirName(
                 config.isNightMode,
-                config.name.normalizeFileName().ifBlank { "top_bar_${System.currentTimeMillis()}" }
+                config.name.normalizeFileName().ifBlank { "top_bar_${System.currentTimeMillis()}" },
             )
             val targetDir = localDir(config.isNightMode, dirName)
             targetDir.mkdirs()
@@ -327,9 +325,7 @@ object TopBarConfig {
     }
 
     /** 透明度百分比（0-100）转 Alpha 值（0-255） */
-    fun opacityToAlpha(opacity: Int): Int {
-        return opacity.coerceIn(0, 100) * 255 / 100
-    }
+    fun opacityToAlpha(opacity: Int): Int = opacity.coerceIn(0, 100) * 255 / 100
 
     /** 给颜色叠加指定透明度（百分比 0-100） */
     fun withOpacity(color: Int, opacity: Int): Int {
@@ -337,28 +333,36 @@ object TopBarConfig {
         return Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color))
     }
 
-    fun defaultBackgroundColor(isNight: Boolean): Int {
-        return if (isNight) Color.BLACK else Color.WHITE
+    fun defaultBackgroundColor(isNight: Boolean): Int = if (isNight) Color.BLACK else Color.WHITE
+
+    fun resolveBackgroundColor(config: Config): Int = config.backgroundColor ?: defaultBackgroundColor(config.isNightMode)
+
+    /**
+     * 顶栏壁纸的平均色（不含 alpha），没壁纸或解不出来时返回 null。
+     *
+     * 供顶栏前景取色使用（见 `resolveTopBarContentColor`）：壁纸是**半透明压在顶栏底色之上**的，
+     * 只看壁纸本身的深浅会把"44% 透明壁纸 + 米白底色"判成深底，于是顶栏配上白字压在米白底上
+     * ——2026-10-12 反馈的"顶栏文字看不清"就是这个原因。取色方拿到平均色后再按 wallpaperAlpha 合成。
+     *
+     * 平均色按 [topBarAspectRatio] 取"居中裁切后实际会显示"的那条区域：顶栏又宽又扁，
+     * 壁纸纵向只露出中间一条，宽图上下常见的留白/黑边根本不在顶栏上。
+     */
+    fun wallpaperAverageColor(wallpaperFile: File?): Int? {
+        if (wallpaperFile == null) return null
+        return ThemeConfig.getImageAverageColor(
+            path = wallpaperFile.absolutePath,
+            cropAspectRatio = topBarAspectRatio,
+        )
     }
 
-    fun resolveBackgroundColor(config: Config): Int {
-        return config.backgroundColor ?: defaultBackgroundColor(config.isNightMode)
-    }
+    fun resolveCornerScale(config: Config): Float = config.cornerScale ?: 1f
 
-    fun resolveCornerScale(config: Config): Float {
-        return config.cornerScale ?: 1f
-    }
+    private fun defaultEntry(context: Context, isNight: Boolean): Entry = Entry(defaultConfig(context, isNight), Source.BUILTIN, DEFAULT_DIR_NAME)
 
-    private fun defaultEntry(context: Context, isNight: Boolean): Entry {
-        return Entry(defaultConfig(context, isNight), Source.BUILTIN, DEFAULT_DIR_NAME)
-    }
-
-    private fun loadLocal(isNight: Boolean): List<Entry> {
-        return typeDir(isNight).listFiles()
-            ?.filter { it.isDirectory }
-            ?.mapNotNull { readEntry(it) }
-            .orEmpty()
-    }
+    private fun loadLocal(isNight: Boolean): List<Entry> = typeDir(isNight).listFiles()
+        ?.filter { it.isDirectory }
+        ?.mapNotNull { readEntry(it) }
+        .orEmpty()
 
     private fun readEntry(dir: File): Entry? {
         val file = File(dir, packageFileName)
@@ -404,7 +408,7 @@ object TopBarConfig {
             FileUtils.delete(activeLocalDir(entry.config.isNightMode), deleteRootDir = true)
             appCtx.putPrefString(
                 if (entry.config.isNightMode) activeNightKey else activeDayKey,
-                DEFAULT_DIR_NAME
+                DEFAULT_DIR_NAME,
             )
         }
     }
@@ -429,10 +433,8 @@ object TopBarConfig {
         cachedWallpaper = null
     }
 
-    private fun activeLocalDir(isNight: Boolean): File {
-        return rootDir.getFile(activeSnapshotDirName)
-            .getFile(if (isNight) "night" else "day")
-    }
+    private fun activeLocalDir(isNight: Boolean): File = rootDir.getFile(activeSnapshotDirName)
+        .getFile(if (isNight) "night" else "day")
 
     private fun localDir(isNight: Boolean, dirName: String): File = typeDir(isNight).getFile(dirName)
 
@@ -447,15 +449,11 @@ object TopBarConfig {
         return candidate
     }
 
-    private fun typeDir(isNight: Boolean): File {
-        return rootDir.getFile(if (isNight) "night" else "day").apply { mkdirs() }
-    }
+    private fun typeDir(isNight: Boolean): File = rootDir.getFile(if (isNight) "night" else "day").apply { mkdirs() }
 
-    private fun defaultName(isNight: Boolean): String {
-        return appCtx.getString(
-            if (isNight) R.string.top_bar_night_default_name else R.string.top_bar_day_default_name
-        )
-    }
+    private fun defaultName(isNight: Boolean): String = appCtx.getString(
+        if (isNight) R.string.top_bar_night_default_name else R.string.top_bar_day_default_name,
+    )
 
     /** 从旧版 SharedPreferences 格式迁移到文件系统存储（仅执行一次） */
     private fun migrateLegacyIfNeeded(context: Context) {
@@ -484,21 +482,19 @@ object TopBarConfig {
         appCtx.putPrefString(if (isNight) activeNightKey else activeDayKey, entry.dirName)
     }
 
-    private fun LegacyConfig.toConfig(): Config {
-        return Config(
-            name = name.ifBlank { defaultName(isNight) },
-            isNightMode = isNight,
-            style = style,
-            tagBarColor = tagBarColor,
-            tagBarAlpha = tagBarAlpha,
-            tagSelectedColor = tagSelectedColor,
-            tagSelectedAlpha = tagSelectedAlpha,
-            wallpaperPath = wallpaperPath,
-            wallpaperAlpha = wallpaperAlpha,
-            backgroundColor = backgroundColor,
-            cornerScale = cornerScale,
-            expandFiltersByDefault = expandFiltersByDefault,
-            updatedAt = updatedAt
-        )
-    }
+    private fun LegacyConfig.toConfig(): Config = Config(
+        name = name.ifBlank { defaultName(isNight) },
+        isNightMode = isNight,
+        style = style,
+        tagBarColor = tagBarColor,
+        tagBarAlpha = tagBarAlpha,
+        tagSelectedColor = tagSelectedColor,
+        tagSelectedAlpha = tagSelectedAlpha,
+        wallpaperPath = wallpaperPath,
+        wallpaperAlpha = wallpaperAlpha,
+        backgroundColor = backgroundColor,
+        cornerScale = cornerScale,
+        expandFiltersByDefault = expandFiltersByDefault,
+        updatedAt = updatedAt,
+    )
 }

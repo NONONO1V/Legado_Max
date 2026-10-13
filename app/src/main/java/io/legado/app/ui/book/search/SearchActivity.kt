@@ -37,6 +37,7 @@ import io.legado.app.domain.model.BookShelfState
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.lib.theme.Selector
 import io.legado.app.lib.theme.accentColor
+import io.legado.app.lib.theme.eInkGrayscale
 import io.legado.app.lib.theme.backgroundColor
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.lib.theme.primaryTextColor
@@ -79,7 +80,8 @@ import kotlinx.coroutines.withContext
 import splitties.init.appCtx
 import kotlin.math.abs
 
-class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel>(),
+class SearchActivity :
+    VMBaseActivity<ActivityBookSearchBinding, SearchViewModel>(),
     BookAdapter.CallBack,
     HistoryKeyAdapter.CallBack,
     SearchScopeDialog.Callback,
@@ -110,8 +112,10 @@ class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel
     private var showSearchProgressMenuItem: MenuItem? = null
     private var searchProgressFontSizeMenuItem: MenuItem? = null
     private var isManualStopSearch = false
+
     /** 原始未过滤的搜索结果，用于屏蔽规则变化时重新过滤 */
     private var rawSearchBooks: List<SearchBook> = emptyList()
+
     /** 当前被屏蔽的搜索结果数量（合并去重后） */
     private var blockedCount = 0
 
@@ -119,6 +123,7 @@ class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel
     private var showBookSheet by mutableStateOf(false)
     private var selectedBook by mutableStateOf<SearchBook?>(null)
     private var selectedBookShelfState by mutableStateOf(BookShelfState.NOT_IN_SHELF)
+
     /** 书籍弹窗 ComposeView */
     private var bookSheetComposeView: ComposeView? = null
 
@@ -172,13 +177,19 @@ class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel
                 // 多书源模式下为每个书源添加菜单项，超过5个时折叠显示
                 val maxShow = 5
                 searchScopeNames.take(maxShow).forEach { name ->
-                    menu.add(R.id.menu_group_1, Menu.NONE, Menu.NONE, name).apply {
+                    // 书源名 / 分组名是用户自定义的（可能带表情符号），这个菜单是 AppCompat
+                    // 自己开的窗口，挂不了整层灰阶，只能把标题本身按灰阶绘制（§7.10）
+                    menu.add(R.id.menu_group_1, Menu.NONE, Menu.NONE, name.eInkGrayscale()).apply {
                         isChecked = true
                     }
                 }
                 if (searchScopeNames.size > maxShow) {
-                    menu.add(Menu.NONE, ID_MENU_MORE, Menu.NONE,
-                        "...+${searchScopeNames.size - maxShow}").apply {
+                    menu.add(
+                        Menu.NONE,
+                        ID_MENU_MORE,
+                        Menu.NONE,
+                        "...+${searchScopeNames.size - maxShow}",
+                    ).apply {
                         isEnabled = false
                     }
                 }
@@ -200,11 +211,11 @@ class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel
             // 菜单只显示已启用分组
             groups?.forEach {
                 if (searchScopeNames.contains(it)) {
-                    menu.add(R.id.menu_group_1, Menu.NONE, Menu.NONE, it).apply {
+                    menu.add(R.id.menu_group_1, Menu.NONE, Menu.NONE, it.eInkGrayscale()).apply {
                         isChecked = true
                     }
                 } else {
-                    menu.add(R.id.menu_group_2, Menu.NONE, Menu.NONE, it)
+                    menu.add(R.id.menu_group_2, Menu.NONE, Menu.NONE, it.eInkGrayscale())
                 }
             }
             if (!hasChecked) {
@@ -225,7 +236,7 @@ class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel
             R.id.menu_precision_search -> {
                 putPrefBoolean(
                     PreferKey.precisionSearch,
-                    !getPrefBoolean(PreferKey.precisionSearch)
+                    !getPrefBoolean(PreferKey.precisionSearch),
                 )
                 precisionSearchMenuItem?.isChecked = getPrefBoolean(PreferKey.precisionSearch)
                 searchView.query?.toString()?.trim()?.let {
@@ -235,7 +246,7 @@ class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel
             R.id.menu_show_search_progress -> {
                 putPrefBoolean(
                     PreferKey.showSearchProgress,
-                    !getPrefBoolean(PreferKey.showSearchProgress)
+                    !getPrefBoolean(PreferKey.showSearchProgress),
                 )
                 showSearchProgressMenuItem?.isChecked =
                     getPrefBoolean(PreferKey.showSearchProgress)
@@ -422,27 +433,27 @@ class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel
 
         // 直接从 records 判断搜索是否进行中：还有 PENDING 或 RUNNING 的源就是搜索中
         val isSearching = records.any {
-            it.status == io.legado.app.model.webBook.SourceSearchRecord.Status.PENDING
-                    || it.status == io.legado.app.model.webBook.SourceSearchRecord.Status.RUNNING
+            it.status == io.legado.app.model.webBook.SourceSearchRecord.Status.PENDING ||
+                it.status == io.legado.app.model.webBook.SourceSearchRecord.Status.RUNNING
         }
 
         val builder = StringBuilder()
 
         val resultCount = rawSearchBooks.size
-        builder.append("结果${resultCount}")
+        builder.append("结果$resultCount")
 
         val completed = records.count {
-            it.status == io.legado.app.model.webBook.SourceSearchRecord.Status.SUCCESS
-                    || it.status == io.legado.app.model.webBook.SourceSearchRecord.Status.EMPTY
-                    || it.status == io.legado.app.model.webBook.SourceSearchRecord.Status.FAILED
+            it.status == io.legado.app.model.webBook.SourceSearchRecord.Status.SUCCESS ||
+                it.status == io.legado.app.model.webBook.SourceSearchRecord.Status.EMPTY ||
+                it.status == io.legado.app.model.webBook.SourceSearchRecord.Status.FAILED
         }
         val total = records.size
-        builder.append("~进度${completed}/${total}")
+        builder.append("~进度$completed/$total")
 
         if (isSearching) {
             val slowRecords = records.filter {
-                it.status == io.legado.app.model.webBook.SourceSearchRecord.Status.RUNNING
-                        && it.duration > 10000
+                it.status == io.legado.app.model.webBook.SourceSearchRecord.Status.RUNNING &&
+                    it.duration > 10000
             }
             if (slowRecords.isNotEmpty()) {
                 builder.append("~慢")
@@ -471,7 +482,7 @@ class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel
         }
 
         if (blockedCount > 0) {
-            builder.append("~屏蔽${blockedCount}")
+            builder.append("~屏蔽$blockedCount")
         }
 
         val text = builder.toString()
@@ -511,9 +522,9 @@ class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel
         if (isManualStopSearch) {
             return
         }
-        if (viewModel.isSearchLiveData.value == false
-            && viewModel.searchKey.isNotEmpty()
-            && viewModel.hasMore
+        if (viewModel.isSearchLiveData.value == false &&
+            viewModel.searchKey.isNotEmpty() &&
+            viewModel.hasMore
         ) {
             viewModel.search("")
         }
@@ -637,9 +648,7 @@ class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel
     /**
      * 获取书籍在书架中的状态
      */
-    override fun getBookShelfState(book: SearchBook): BookShelfState {
-        return viewModel.getBookShelfState(book)
-    }
+    override fun getBookShelfState(book: SearchBook): BookShelfState = viewModel.getBookShelfState(book)
 
     /**
      * 长按书籍事件
@@ -762,13 +771,13 @@ class SearchActivity : VMBaseActivity<ActivityBookSearchBinding, SearchViewModel
                                         putExtra("bookUrl", book.bookUrl)
                                         putExtra("origin", book.origin)
                                     }
-                                }
+                                },
                             )
                         }
                     }
                     val params = android.widget.FrameLayout.LayoutParams(
                         android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                        android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+                        android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
                     )
                     contentView.addView(composeView, params)
                 }

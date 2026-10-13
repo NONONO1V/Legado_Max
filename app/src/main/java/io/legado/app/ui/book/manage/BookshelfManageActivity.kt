@@ -20,13 +20,12 @@ import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookGroup
 import io.legado.app.data.entities.BookSource
 import io.legado.app.databinding.ActivityArrangeBookBinding
-import io.legado.app.databinding.DialogEditTextBinding
-import io.legado.app.help.DirectLinkUpload
 import io.legado.app.help.book.contains
 import io.legado.app.help.book.isLocal
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.LocalConfig
 import io.legado.app.lib.dialogs.alert
+import io.legado.app.lib.theme.eInkGrayscale
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.lib.theme.primaryTextColor
 import io.legado.app.ui.book.group.GroupManageDialog
@@ -41,7 +40,6 @@ import io.legado.app.ui.widget.recycler.VerticalDivider
 import io.legado.app.utils.applyTint
 import io.legado.app.utils.cnCompare
 import io.legado.app.utils.dpToPx
-import io.legado.app.utils.isAbsUrl
 import io.legado.app.help.ExportResultHandler
 import io.legado.app.utils.sendToClip
 import io.legado.app.utils.setEdgeEffectColor
@@ -156,15 +154,12 @@ class BookshelfManageActivity :
         searchView.applyTint(primaryTextColor)
         searchView.isSubmitButtonEnabled = true
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
-            }
+            override fun onQueryTextSubmit(query: String?): Boolean = false
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 upBookData()
                 return false
             }
-
         })
     }
 
@@ -274,7 +269,7 @@ class BookshelfManageActivity :
                     fileData = HandleFileContract.FileData(
                         "bookSource.json",
                         file,
-                        "application/json"
+                        "application/json",
                     )
                 }
             }
@@ -312,7 +307,13 @@ class BookshelfManageActivity :
         menu?.findItem(R.id.menu_book_group)?.subMenu?.let { subMenu ->
             subMenu.removeGroup(R.id.menu_group)
             groupList.forEach { bookGroup ->
-                subMenu.add(R.id.menu_group, bookGroup.order, Menu.NONE, bookGroup.groupName)
+                // 分组名是用户自定义的（可能带表情符号），框架自开的菜单窗口挂不了整层灰阶（§7.10）
+                subMenu.add(
+                    R.id.menu_group,
+                    bookGroup.order,
+                    Menu.NONE,
+                    bookGroup.groupName.eInkGrayscale(),
+                )
             }
         }
     }
@@ -338,7 +339,7 @@ class BookshelfManageActivity :
 
     override fun selectGroup(requestCode: Int, groupId: Long) {
         showDialogFragment(
-            GroupSelectDialog(groupId, requestCode)
+            GroupSelectDialog(groupId, requestCode),
         )
     }
 
@@ -422,5 +423,4 @@ class BookshelfManageActivity :
         // 长按时激活拖拽选择模式
         dragSelectTouchHelper.activeDragSelect(position)
     }
-
 }

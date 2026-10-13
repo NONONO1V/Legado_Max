@@ -28,6 +28,7 @@ import io.legado.app.databinding.DialogBookChangeSourceBinding
 import io.legado.app.help.book.isWebFile
 import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.dialogs.alert
+import io.legado.app.lib.theme.eInkGrayscale
 import io.legado.app.lib.theme.elevation
 import io.legado.app.lib.theme.getPrimaryTextColor
 import io.legado.app.lib.theme.primaryColor
@@ -56,7 +57,8 @@ import kotlinx.coroutines.launch
 /**
  * 换源界面
  */
-class ChangeBookSourceDialog() : BaseDialogFragment(R.layout.dialog_book_change_source),
+class ChangeBookSourceDialog() :
+    BaseDialogFragment(R.layout.dialog_book_change_source),
     Toolbar.OnMenuItemClickListener,
     ChangeBookSourceAdapter.CallBack {
 
@@ -174,15 +176,12 @@ class ChangeBookSourceDialog() : BaseDialogFragment(R.layout.dialog_book_change_
             binding.toolBar.navigationIcon = null
         }
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
-            }
+            override fun onQueryTextSubmit(query: String?): Boolean = false
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 viewModel.screen(newText)
                 return false
             }
-
         })
     }
 
@@ -190,7 +189,7 @@ class ChangeBookSourceDialog() : BaseDialogFragment(R.layout.dialog_book_change_
         binding.toolBar.navigationIcon =
             getCompatDrawable(androidx.appcompat.R.drawable.abc_ic_ab_back_material)
         binding.toolBar.setNavigationContentDescription(
-            androidx.appcompat.R.string.abc_action_bar_up_description
+            androidx.appcompat.R.string.abc_action_bar_up_description,
         )
         binding.toolBar.setNavigationOnClickListener {
             dismissAllowingStateLoss()
@@ -253,7 +252,7 @@ class ChangeBookSourceDialog() : BaseDialogFragment(R.layout.dialog_book_change_
                                 adapter.itemCount,
                                 count,
                                 viewModel.totalSourceCount,
-                                name
+                                name,
                             )
                         delay(500)
                     }
@@ -344,7 +343,7 @@ class ChangeBookSourceDialog() : BaseDialogFragment(R.layout.dialog_book_change_
         } else {
             alert(
                 titleResource = R.string.book_type_different,
-                messageResource = R.string.soure_change_source
+                messageResource = R.string.soure_change_source,
             ) {
                 okButton {
                     changeSource(searchBook) {
@@ -390,15 +389,13 @@ class ChangeBookSourceDialog() : BaseDialogFragment(R.layout.dialog_book_change_
         viewModel.setBookScore(searchBook, score)
     }
 
-    override fun getBookScore(searchBook: SearchBook): Int {
-        return viewModel.getBookScore(searchBook)
-    }
+    override fun getBookScore(searchBook: SearchBook): Int = viewModel.getBookScore(searchBook)
 
     private fun changeSource(searchBook: SearchBook, onSuccess: (() -> Unit)? = null) {
         waitDialog.setText(R.string.load_toc)
         waitDialog.show()
         val book = viewModel.bookMap[searchBook.primaryStr()] ?: searchBook.toBook()
-        if (book.isWebFile) { //文件类书源不解析目录
+        if (book.isWebFile) { // 文件类书源不解析目录
             val source = appDb.bookSourceDao.getBookSource(book.origin)
             if (source == null) {
                 AppLog.put("书源不存在", null, true)
@@ -433,7 +430,9 @@ class ChangeBookSourceDialog() : BaseDialogFragment(R.layout.dialog_book_change_
                 val allItem = menu.add(R.id.source_group, Menu.NONE, Menu.NONE, R.string.all_source)
                 var hasSelectedGroup = false
                 groups.forEach { group ->
-                    menu.add(R.id.source_group, Menu.NONE, Menu.NONE, group)?.let {
+                    // 分组名是用户自定义的（可能带表情符号），框架自开的菜单窗口挂不了整层灰阶（§7.10）；
+                    // 勾选仍按 String 比较，别拿菜单标题比
+                    menu.add(R.id.source_group, Menu.NONE, Menu.NONE, group.eInkGrayscale())?.let {
                         if (group == selectedGroup) {
                             it.isChecked = true
                             hasSelectedGroup = true
@@ -469,7 +468,7 @@ class ChangeBookSourceDialog() : BaseDialogFragment(R.layout.dialog_book_change_
             adapter.notifyItemRangeChanged(
                 0,
                 adapter.itemCount,
-                bundleOf(Pair("upCurSource", oldBookUrl))
+                bundleOf(Pair("upCurSource", oldBookUrl)),
             )
         }
     }
@@ -478,5 +477,4 @@ class ChangeBookSourceDialog() : BaseDialogFragment(R.layout.dialog_book_change_
         val oldBook: Book?
         fun changeTo(source: BookSource, book: Book, toc: List<BookChapter>)
     }
-
 }

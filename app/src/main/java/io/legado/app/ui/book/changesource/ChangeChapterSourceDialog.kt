@@ -28,6 +28,7 @@ import io.legado.app.databinding.DialogChapterChangeSourceBinding
 import io.legado.app.help.book.BookHelp
 import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.dialogs.alert
+import io.legado.app.lib.theme.eInkGrayscale
 import io.legado.app.lib.theme.elevation
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.ui.book.read.ReadBookActivity
@@ -51,8 +52,8 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-
-class ChangeChapterSourceDialog() : BaseDialogFragment(R.layout.dialog_chapter_change_source),
+class ChangeChapterSourceDialog() :
+    BaseDialogFragment(R.layout.dialog_chapter_change_source),
     Toolbar.OnMenuItemClickListener,
     ChangeChapterSourceAdapter.CallBack,
     ChangeChapterTocAdapter.Callback {
@@ -190,15 +191,12 @@ class ChangeChapterSourceDialog() : BaseDialogFragment(R.layout.dialog_chapter_c
             binding.toolBar.subtitle = ""
         }
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
-            }
+            override fun onQueryTextSubmit(query: String?): Boolean = false
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 viewModel.screen(newText)
                 return false
             }
-
         })
     }
 
@@ -356,9 +354,7 @@ class ChangeChapterSourceDialog() : BaseDialogFragment(R.layout.dialog_chapter_c
         viewModel.setBookScore(searchBook, score)
     }
 
-    override fun getBookScore(searchBook: SearchBook): Int {
-        return viewModel.getBookScore(searchBook)
-    }
+    override fun getBookScore(searchBook: SearchBook): Int = viewModel.getBookScore(searchBook)
 
     override fun clickChapter(bookChapter: BookChapter, nextChapterUrl: String?) {
         searchBook?.let {
@@ -381,7 +377,9 @@ class ChangeChapterSourceDialog() : BaseDialogFragment(R.layout.dialog_chapter_c
             val allItem = menu.add(R.id.source_group, Menu.NONE, Menu.NONE, R.string.all_source)
             var hasSelectedGroup = false
             groups.forEach { group ->
-                menu.add(R.id.source_group, Menu.NONE, Menu.NONE, group)?.let {
+                // 分组名是用户自定义的（可能带表情符号），框架自开的菜单窗口挂不了整层灰阶（§7.10）；
+                // 勾选仍按 String 比较，别拿菜单标题比
+                menu.add(R.id.source_group, Menu.NONE, Menu.NONE, group.eInkGrayscale())?.let {
                     if (group == selectedGroup) {
                         it.isChecked = true
                         hasSelectedGroup = true
@@ -400,7 +398,7 @@ class ChangeChapterSourceDialog() : BaseDialogFragment(R.layout.dialog_chapter_c
             searchBookAdapter.notifyItemRangeChanged(
                 0,
                 searchBookAdapter.itemCount,
-                bundleOf(Pair("upCurSource", oldBookUrl))
+                bundleOf(Pair("upCurSource", oldBookUrl)),
             )
         }
     }
@@ -410,5 +408,4 @@ class ChangeChapterSourceDialog() : BaseDialogFragment(R.layout.dialog_chapter_c
         fun changeTo(source: BookSource, book: Book, toc: List<BookChapter>)
         fun replaceContent(content: String)
     }
-
 }

@@ -32,7 +32,6 @@ import io.legado.app.R
 import io.legado.app.constant.EventBus
 import io.legado.app.constant.Theme
 import io.legado.app.help.config.AppConfig
-import io.legado.app.help.config.ThemeConfig
 import io.legado.app.help.config.TopBarConfig
 import io.legado.app.lib.theme.ThemeStateStore
 import io.legado.app.lib.theme.elevation
@@ -51,7 +50,7 @@ data class PageTopBarColors(
     val cornerRadius: Dp = 0.dp,
     val shadowElevation: Dp = 0.dp,
     val wallpaperFile: File? = null,
-    val wallpaperAlpha: Float = 1f
+    val wallpaperAlpha: Float = 1f,
 )
 
 @Composable
@@ -87,17 +86,18 @@ fun pageTopBarColors(): PageTopBarColors {
     val containerColor = TopBarConfig.withOpacity(backgroundColor, alphaPercent)
     val wallpaperFile = TopBarConfig.currentWallpaperFile(context, AppConfig.isNightTheme)
         ?.takeIf { !transparentNavBar && config.style == TopBarConfig.STYLE_REGULAR }
-    // 内容色与 View 侧 TitleBar 走同一个入口（见 resolveTopBarContentColor）：传入顶栏自身底色
-    // 与顶栏壁纸亮度，由它决定"按底色/壁纸取"还是"回退到页面声明 / 窗口背景（壁纸）"。
-    // 顶栏透明时传 null 等价路径（alpha 为 0），会落到窗口背景亮度上
+    // 内容色与 View 侧 TitleBar 走同一个入口（见 resolveTopBarContentColor）：底色与壁纸两层
+    // 都要传，由它先按各自的不透明度合成成"前景实际压着的颜色"再判深浅——只拿壁纸本身的深浅
+    // 判定会把"44% 透明壁纸 + 米白底色"判成深底而配上白字（2026-10-12 反馈的顶栏文字看不清）。
+    // 顶栏透明时两层 alpha 都是 0，等价于没传，会落到窗口背景亮度上
     val contentColor = Color(
         resolveTopBarContentColor(
             context = context,
             topBarTheme = Theme.Auto,
-            topBarBackground = containerColor.takeIf { wallpaperFile == null },
-            topBarWallpaperLuminance = wallpaperFile
-                ?.let { ThemeConfig.getImageLuminance(it.absolutePath) },
-        )
+            topBarBackground = containerColor,
+            topBarWallpaperColor = TopBarConfig.wallpaperAverageColor(wallpaperFile)
+                ?.let { TopBarConfig.withOpacity(it, alphaPercent) },
+        ),
     )
     return PageTopBarColors(
         containerColor = Color(containerColor),
@@ -105,7 +105,7 @@ fun pageTopBarColors(): PageTopBarColors {
         cornerRadius = cornerRadius,
         shadowElevation = shadowElevation,
         wallpaperFile = wallpaperFile,
-        wallpaperAlpha = TopBarConfig.opacityToAlpha(alphaPercent) / 255f
+        wallpaperAlpha = TopBarConfig.opacityToAlpha(alphaPercent) / 255f,
     )
 }
 
@@ -113,7 +113,7 @@ fun pageTopBarColors(): PageTopBarColors {
 fun PageTopBarContainer(
     colors: PageTopBarColors,
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     Box(modifier = modifier.pageTopBarBackground(colors)) {
         content()
@@ -124,7 +124,7 @@ fun PageTopBarContainer(
 fun Modifier.pageTopBarBackground(colors: PageTopBarColors): Modifier {
     val shape = RoundedCornerShape(
         bottomStart = colors.cornerRadius,
-        bottomEnd = colors.cornerRadius
+        bottomEnd = colors.cornerRadius,
     )
     return this
         .fillMaxWidth()
@@ -144,7 +144,7 @@ private fun Modifier.drawTopBarWallpaper(colors: PageTopBarColors): Modifier {
         wallpaper?.absolutePath,
         wallpaper?.lastModified(),
         targetWidth,
-        targetHeight
+        targetHeight,
     ) {
         wallpaper?.takeIf { it.exists() && it.isFile }?.let { file ->
             runCatching {
@@ -161,7 +161,7 @@ private fun Modifier.drawTopBarWallpaper(colors: PageTopBarColors): Modifier {
                 val dstHeight = size.height.roundToInt().coerceAtLeast(1)
                 val scale = max(
                     dstWidth / wallpaperBitmap.width.toFloat(),
-                    dstHeight / wallpaperBitmap.height.toFloat()
+                    dstHeight / wallpaperBitmap.height.toFloat(),
                 )
                 val srcWidth = (dstWidth / scale).roundToInt().coerceAtMost(wallpaperBitmap.width)
                 val srcHeight = (dstHeight / scale).roundToInt().coerceAtMost(wallpaperBitmap.height)
@@ -174,7 +174,7 @@ private fun Modifier.drawTopBarWallpaper(colors: PageTopBarColors): Modifier {
                     wallpaperBitmap,
                     Rect(srcLeft, srcTop, srcLeft + srcWidth, srcTop + srcHeight),
                     Rect(0, 0, dstWidth, dstHeight),
-                    paint
+                    paint,
                 )
             }
             drawContent()
@@ -204,9 +204,7 @@ private fun rememberTopBarConfigVersion(): Int {
 }
 
 @Composable
-fun pageCardContainerColor(): Color {
-    return MaterialTheme.colorScheme.surfaceVariant
-}
+fun pageCardContainerColor(): Color = MaterialTheme.colorScheme.surfaceVariant
 
 @Composable
 fun pageCardElevatedContainerColor(): Color {
@@ -228,9 +226,7 @@ fun pageCardElevatedContainerColor(): Color {
  * 暗色下不做加亮：首页那套同样只调 alpha，保持一致才能"像首页一样"。
  */
 @Composable
-fun pagePanelContainerColor(): Color {
-    return MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-}
+fun pagePanelContainerColor(): Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
 
 @Composable
 fun pageHeaderContainerColor(): Color {
@@ -296,6 +292,4 @@ fun pageMutedIconTint(): Color {
  * 使用 MaterialTheme 的 secondary 色作为顶栏背景色。
  */
 @Composable
-fun pageTopBarContainerColor(): Color {
-    return MaterialTheme.colorScheme.secondary
-}
+fun pageTopBarContainerColor(): Color = MaterialTheme.colorScheme.secondary
