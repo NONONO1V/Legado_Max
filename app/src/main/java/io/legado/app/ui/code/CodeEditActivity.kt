@@ -28,6 +28,7 @@ import io.legado.app.constant.PreferKey
 import io.legado.app.databinding.ActivityCodeEditBinding
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.ThemeConfig
+import io.legado.app.help.config.UiFontStore
 import io.legado.app.lib.dialogs.AndroidAlertBuilder
 import io.legado.app.lib.dialogs.SelectItem
 import io.legado.app.lib.dialogs.alert
@@ -88,6 +89,14 @@ class CodeEditActivity :
                 nonPrintablePaintingFlags = AppConfig.editNonPrintable
                 setEditorLanguage(viewModel.language)
                 upEdit(AppConfig.editFontScale, null, AppConfig.editAutoWrap)
+                // sora-editor 是自绘控件（Canvas 画字），既不是 TextView 也不走 XML 膨胀，
+                // 前面几层注入全都覆盖不到它，只能在这里显式喂字体。
+                // 只在装了自定义界面字体时才改：没装时 uiTypeface() 会返回 sans，
+                // 那会把代码编辑器默认的等宽字体顶掉，反而是负优化。
+                UiFontStore.typeface()?.let { uiFont ->
+                    setTypefaceText(uiFont)
+                    setTypefaceLineNumber(uiFont)
+                }
                 setText(viewModel.initialText)
                 editable = viewModel.writable
                 menuSaveBtn?.isVisible = viewModel.writable

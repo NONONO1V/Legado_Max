@@ -9,6 +9,8 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.Menu
 import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.annotation.StyleRes
 import androidx.appcompat.widget.Toolbar
@@ -17,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.appbar.AppBarLayout
 import io.legado.app.R
 import io.legado.app.constant.Theme
+import io.legado.app.lib.theme.applyUiTypeface
 import io.legado.app.lib.theme.applyUiTypefaceDeep
 import io.legado.app.utils.activity
 import io.legado.app.utils.setOnApplyWindowInsetsListenerCompat
@@ -165,6 +168,7 @@ class TitleBar @JvmOverloads constructor(
                 this.subtitle = subtitleText
             }
             applyTitleBarTypeface()
+            setOnHierarchyChangeListener(ToolbarTypefaceListener)
 
             if (a.hasValue(R.styleable.TitleBar_contentLayout)) {
                 inflate(context, a.getResourceId(R.styleable.TitleBar_contentLayout, 0), this)
@@ -227,6 +231,21 @@ class TitleBar @JvmOverloads constructor(
         toolbar.applyUiTypefaceDeep()
     }
 
+    /**
+     * 子视图监听：Toolbar 的标题、副标题、菜单项都是它在运行时用代码创建后 addView 进来的，
+     * 时机飘忽（首次 setTitle、inflate 菜单、切横竖屏重建……都可能），靠"每个入口补一次"
+     * 的写法总会漏——项目里有上百处 `titleBar.title = ` 之外的直接赋值。
+     * 改为监听挂载事件，任何时刻被加进来的 TextView 都当场补字体。
+     */
+    private object ToolbarTypefaceListener : ViewGroup.OnHierarchyChangeListener {
+
+        override fun onChildViewAdded(parent: View, child: View) {
+            if (child is TextView) child.applyUiTypeface()
+        }
+
+        override fun onChildViewRemoved(parent: View, child: View) = Unit
+    }
+
     fun setNavigationOnClickListener(clickListener: ((View) -> Unit)) {
         toolbar.setNavigationOnClickListener(clickListener)
     }
@@ -247,6 +266,8 @@ class TitleBar @JvmOverloads constructor(
 
     fun setTitleTextAppearance(@StyleRes resId: Int) {
         toolbar.setTitleTextAppearance(context, resId)
+        // TextAppearance 里若声明了 fontFamily 会把字体重置回系统字体，设完补一次
+        applyTitleBarTypeface()
     }
 
     fun setSubTitleTextColor(@ColorInt color: Int) {
@@ -255,6 +276,7 @@ class TitleBar @JvmOverloads constructor(
 
     fun setSubTitleTextAppearance(@StyleRes resId: Int) {
         toolbar.setSubtitleTextAppearance(context, resId)
+        applyTitleBarTypeface()
     }
 
     fun setTextColor(@ColorInt color: Int) {
