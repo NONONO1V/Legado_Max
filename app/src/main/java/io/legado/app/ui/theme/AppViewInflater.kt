@@ -37,7 +37,9 @@ class AppViewInflater : AppCompatViewInflater() {
         applyUiTypeface(context.uiTypeface())
     }
 
-    override fun createTextView(context: Context, attrs: AttributeSet) = super.createTextView(context, attrs).withUiFont(context, attrs)
+    // 产出自卫型 UiFontTextView：菜单弹窗条目（ListMenuItemView.onFinishInflate）等
+    // 会在膨胀后再 setTextAppearance 把字体冲回系统字体，见 UiFontTextView 类注释
+    override fun createTextView(context: Context, attrs: AttributeSet) = UiFontTextView(context, attrs).withUiFont(context, attrs)
 
     override fun createButton(context: Context, attrs: AttributeSet) = super.createButton(context, attrs).withUiFont(context, attrs)
 
