@@ -122,10 +122,13 @@ object PreferKey {
     const val comicStyleSelect = "comicStyleSelect"
     const val readStyleSelect = "readStyleSelect"
     const val systemTypefaces = "system_typefaces"
+
     /** 主题设置里「界面字体」这一项的 key */
     const val uiFont = "uiFont"
+
     /** 已安装到私有目录的自定义界面字体绝对路径，空串表示未设置 */
     const val uiFontPath = "uiFontPath"
+
     /** 自定义界面字体的展示名 */
     const val uiFontName = "uiFontName"
     const val readBodyToLh = "readBodyToLh"

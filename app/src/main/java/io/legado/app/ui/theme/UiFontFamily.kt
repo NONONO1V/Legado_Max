@@ -22,24 +22,22 @@ internal fun uiFontFamily(typeface: Typeface): FontFamily = when (typeface) {
     else -> FontFamily(PreloadedUiFont(typeface))
 }
 
-private class PreloadedUiFont(val typeface: Typeface) : AndroidFont(
-    loadingStrategy = FontLoadingStrategy.Blocking,
-    typefaceLoader = PreloadedTypefaceLoader,
-    variationSettings = FontVariation.Settings(),
-) {
+private class PreloadedUiFont(val typeface: Typeface) :
+    AndroidFont(
+        loadingStrategy = FontLoadingStrategy.Blocking,
+        typefaceLoader = PreloadedTypefaceLoader,
+        variationSettings = FontVariation.Settings(),
+    ) {
     override val weight: FontWeight = FontWeight.Normal
     override val style: FontStyle = FontStyle.Normal
 
-    override fun equals(other: Any?): Boolean =
-        other is PreloadedUiFont && typeface == other.typeface
+    override fun equals(other: Any?): Boolean = other is PreloadedUiFont && typeface == other.typeface
 
     override fun hashCode(): Int = typeface.hashCode()
 }
 
 private object PreloadedTypefaceLoader : AndroidFont.TypefaceLoader {
-    override fun loadBlocking(context: Context, font: AndroidFont): Typeface =
-        (font as PreloadedUiFont).typeface
+    override fun loadBlocking(context: Context, font: AndroidFont): Typeface = (font as PreloadedUiFont).typeface
 
-    override suspend fun awaitLoad(context: Context, font: AndroidFont): Typeface =
-        loadBlocking(context, font)
+    override suspend fun awaitLoad(context: Context, font: AndroidFont): Typeface = loadBlocking(context, font)
 }

@@ -87,7 +87,9 @@ import java.util.Locale
  * 支持长按列表项进入多选模式，可批量导出、置顶、删除。
  * 列表项展示气泡预览图和来源信息。
  */
-class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPickerDialogListener {
+class BubbleManageActivity :
+    BaseActivity<ActivityThemeManageBinding>(),
+    ColorPickerDialogListener {
 
     override val binding by viewBinding(ActivityThemeManageBinding::inflate)
 
@@ -147,7 +149,7 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
         tvAddTheme.background = UiCorner.actionSelector(
             ContextCompat.getColor(this@BubbleManageActivity, R.color.background_card_surface),
             ContextCompat.getColor(this@BubbleManageActivity, R.color.background_menu),
-            UiCorner.actionRadius(this@BubbleManageActivity)
+            UiCorner.actionRadius(this@BubbleManageActivity),
         )
         tvAddTheme.setOnClickListener { showAddActions() }
         tvAddTheme.applyNavigationBarMargin(withInitialMargin = true)
@@ -167,15 +169,28 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
         return true
     }
 
-    override fun onCompatOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            MENU_HELP -> { showBubbleHelp(); true }
-            R.id.menu_select_all -> { selectAllOrClear(); true }
-            R.id.menu_to_top -> { toTopSelected(); true }
-            R.id.menu_export -> { exportSelected(); true }
-            R.id.menu_delete -> { deleteSelected(); true }
-            else -> super.onCompatOptionsItemSelected(item)
+    override fun onCompatOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        MENU_HELP -> {
+            showBubbleHelp()
+            true
         }
+        R.id.menu_select_all -> {
+            selectAllOrClear()
+            true
+        }
+        R.id.menu_to_top -> {
+            toTopSelected()
+            true
+        }
+        R.id.menu_export -> {
+            exportSelected()
+            true
+        }
+        R.id.menu_delete -> {
+            deleteSelected()
+            true
+        }
+        else -> super.onCompatOptionsItemSelected(item)
     }
 
     /**
@@ -230,7 +245,7 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
                     startActivity<WebViewActivity> {
                         putExtra("url", url)
                     }
-                }
+                },
             )
             customView { alertBinding.root }
             okButton {
@@ -304,11 +319,13 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
 
     private fun showEditDialog(entry: BubblePackageManager.Entry?) {
         if (entry?.source == BubblePackageManager.Source.BUILTIN) return
-        editingConfig = (entry?.config ?: BubblePackageManager.builtinConfig().copy(
-            name = getString(R.string.bubble_custom_name),
-            dirName = "",
-            updatedAt = System.currentTimeMillis()
-        )).copy(dirName = entry?.dirName.orEmpty())
+        editingConfig = (
+            entry?.config ?: BubblePackageManager.builtinConfig().copy(
+                name = getString(R.string.bubble_custom_name),
+                dirName = "",
+                updatedAt = System.currentTimeMillis(),
+            )
+            ).copy(dirName = entry?.dirName.orEmpty())
         val root = buildEditView()
         editingRoot = root
         alert(if (entry == null) R.string.add else R.string.edit) {
@@ -322,7 +339,7 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
                 val config = editingConfig ?: return@okButton
                 val next = config.copy(
                     name = root.findViewWithTag<EditText>(TAG_NAME)?.text?.toString().orEmpty(),
-                    dirName = entry?.dirName.orEmpty()
+                    dirName = entry?.dirName.orEmpty(),
                 )
                 runCatching {
                     requireValidSvg(next)
@@ -340,46 +357,50 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
         }
     }
 
-    private fun buildEditView(): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(2.dp, 2.dp, 2.dp, 4.dp)
-            populateEditView(this)
-            applyUiTypefaceDeep(this@BubbleManageActivity.uiTypeface())
-        }
+    private fun buildEditView(): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(2.dp, 2.dp, 2.dp, 4.dp)
+        populateEditView(this)
+        applyUiTypefaceDeep(this@BubbleManageActivity.uiTypeface())
     }
 
     private fun populateEditView(root: LinearLayout) {
         val config = editingConfig ?: return
         root.addView(PackageManageUi.nameInput(this, config.name, getString(R.string.bubble_name)).apply { tag = TAG_NAME })
-        root.addView(PackageManageUi.optionRow(this, getString(R.string.bubble_size_scale), "%.1f".format(Locale.ROOT, config.sizeScale)) {
-            showSizeScalePicker()
-        })
+        root.addView(
+            PackageManageUi.optionRow(this, getString(R.string.bubble_size_scale), "%.1f".format(Locale.ROOT, config.sizeScale)) {
+                showSizeScalePicker()
+            },
+        )
         root.addView(colorRow(getString(R.string.bubble_day_normal), colorOrDefault(config.dayNormalColor, false), COLOR_DAY_NORMAL))
         root.addView(colorRow(getString(R.string.bubble_day_emphasis), colorOrDefault(config.dayEmphasisColor, true), COLOR_DAY_EMPHASIS))
         root.addView(colorRow(getString(R.string.bubble_night_normal), colorOrDefault(config.nightNormalColor, false), COLOR_NIGHT_NORMAL))
         root.addView(colorRow(getString(R.string.bubble_night_emphasis), colorOrDefault(config.nightEmphasisColor, true), COLOR_NIGHT_EMPHASIS))
-        root.addView(PackageManageUi.optionRow(this, getString(R.string.bubble_svg_edit_title), getString(R.string.bubble_svg_edit_hint)) {
-            openSvgEditor()
-        })
+        root.addView(
+            PackageManageUi.optionRow(this, getString(R.string.bubble_svg_edit_title), getString(R.string.bubble_svg_edit_hint)) {
+                openSvgEditor()
+            },
+        )
     }
 
     private fun captureEditFields() {
         val config = editingConfig ?: return
         val root = editingRoot ?: return
         editingConfig = config.copy(
-            name = root.findViewWithTag<EditText>(TAG_NAME)?.text?.toString() ?: config.name
+            name = root.findViewWithTag<EditText>(TAG_NAME)?.text?.toString() ?: config.name,
         )
     }
 
     private fun openSvgEditor() {
         captureEditFields()
         val svg = editingConfig?.svgTemplate.orEmpty()
-        svgEditLauncher.launch(Intent(this, CodeEditActivity::class.java).apply {
-            CodeEditLauncher.putText(this, svg)
-            putExtra("title", getString(R.string.bubble_svg_template_title))
-            putExtra("cursorPosition", svgCursorPosition.coerceIn(0, svg.length))
-        })
+        svgEditLauncher.launch(
+            Intent(this, CodeEditActivity::class.java).apply {
+                CodeEditLauncher.putText(this, svg)
+                putExtra("title", getString(R.string.bubble_svg_template_title))
+                putExtra("cursorPosition", svgCursorPosition.coerceIn(0, svg.length))
+            },
+        )
     }
 
     private fun showSizeScalePicker() {
@@ -394,21 +415,19 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
                 captureEditFields()
                 val latest = editingConfig ?: config
                 editingConfig = latest.copy(
-                    sizeScale = (it / 10f).coerceIn(BubblePackageManager.MIN_SIZE_SCALE, BubblePackageManager.MAX_SIZE_SCALE)
+                    sizeScale = (it / 10f).coerceIn(BubblePackageManager.MIN_SIZE_SCALE, BubblePackageManager.MAX_SIZE_SCALE),
                 )
                 refreshEditDialog()
             }
     }
 
-    private fun colorRow(title: String, value: String, target: Int): View {
-        return PackageManageUi.optionRow(this, title, value.uppercase(Locale.ROOT), value.toColorInt()) {
-            ColorPickerDialog.newBuilder()
-                .setColor(value.toColorInt())
-                .setShowAlphaSlider(false)
-                .setDialogType(ColorPickerDialog.TYPE_CUSTOM)
-                .setDialogId(target)
-                .show(this)
-        }
+    private fun colorRow(title: String, value: String, target: Int): View = PackageManageUi.optionRow(this, title, value.uppercase(Locale.ROOT), value.toColorInt()) {
+        ColorPickerDialog.newBuilder()
+            .setColor(value.toColorInt())
+            .setShowAlphaSlider(false)
+            .setDialogType(ColorPickerDialog.TYPE_CUSTOM)
+            .setDialogId(target)
+            .show(this)
     }
 
     private fun refreshEditDialog() {
@@ -601,11 +620,11 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
             background = UiCorner.surfaceRounded(
                 this@BubbleManageActivity,
                 ContextCompat.getColor(this@BubbleManageActivity, R.color.background_card_surface),
-                UiCorner.panelRadius(this@BubbleManageActivity)
+                UiCorner.panelRadius(this@BubbleManageActivity),
             )
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
+                ViewGroup.LayoutParams.WRAP_CONTENT,
             ).apply {
                 topMargin = dp(10)
                 marginStart = dp(16)
@@ -710,9 +729,7 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
                 notifyDataSetChanged()
             }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
-            return Holder(createItemView(parent))
-        }
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder = Holder(createItemView(parent))
 
         override fun getItemCount(): Int = items.size
 
@@ -725,23 +742,21 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
             super.onViewRecycled(holder)
         }
 
-        private fun createItemView(parent: ViewGroup): LinearLayout {
-            return LinearLayout(parent.context).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = android.view.Gravity.CENTER_VERTICAL
-                setPadding(12.dp, 10.dp, 12.dp, 10.dp)
-                minimumHeight = BUBBLE_ITEM_MIN_HEIGHT_DP.dp
-                background = UiCorner.surfaceRounded(
-                    this@BubbleManageActivity,
-                    ContextCompat.getColor(parent.context, R.color.background_card_surface),
-                    UiCorner.panelRadius(this@BubbleManageActivity)
-                )
-                layoutParams = RecyclerView.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    topMargin = 10.dp
-                }
+        private fun createItemView(parent: ViewGroup): LinearLayout = LinearLayout(parent.context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            setPadding(12.dp, 10.dp, 12.dp, 10.dp)
+            minimumHeight = BUBBLE_ITEM_MIN_HEIGHT_DP.dp
+            background = UiCorner.surfaceRounded(
+                this@BubbleManageActivity,
+                ContextCompat.getColor(parent.context, R.color.background_card_surface),
+                UiCorner.panelRadius(this@BubbleManageActivity),
+            )
+            layoutParams = RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply {
+                topMargin = 10.dp
             }
         }
 
@@ -753,7 +768,7 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
                 setPadding(6.dp, 6.dp, 6.dp, 6.dp)
                 background = UiCorner.opaqueRounded(
                     ContextCompat.getColor(itemRoot.context, R.color.background_menu),
-                    UiCorner.actionRadius(this@BubbleManageActivity)
+                    UiCorner.actionRadius(this@BubbleManageActivity),
                 )
             }
             private val textBox = LinearLayout(itemRoot.context).apply {
@@ -775,7 +790,7 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
                 orientation = LinearLayout.HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
                 ).apply { topMargin = 8.dp }
             }
             private val tvApply = createActionButton()
@@ -784,7 +799,7 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
             private val checkBox = CheckBox(itemRoot.context).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
                 ).apply {
                     marginStart = 4.dp
                 }
@@ -797,35 +812,37 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
                 textBox.addView(info)
                 textBox.addView(buttonRow)
                 buttonRow.addView(tvApply)
-                buttonRow.addView(android.widget.Space(itemRoot.context).apply {
-                    layoutParams = LinearLayout.LayoutParams(8.dp, 0)
-                })
+                buttonRow.addView(
+                    android.widget.Space(itemRoot.context).apply {
+                        layoutParams = LinearLayout.LayoutParams(8.dp, 0)
+                    },
+                )
                 buttonRow.addView(tvEdit)
-                buttonRow.addView(android.widget.Space(itemRoot.context).apply {
-                    layoutParams = LinearLayout.LayoutParams(8.dp, 0)
-                })
+                buttonRow.addView(
+                    android.widget.Space(itemRoot.context).apply {
+                        layoutParams = LinearLayout.LayoutParams(8.dp, 0)
+                    },
+                )
                 buttonRow.addView(tvMore)
                 itemRoot.addView(preview)
                 itemRoot.addView(textBox)
                 itemRoot.addView(checkBox)
             }
 
-            private fun createActionButton(): TextView {
-                return TextView(itemRoot.context).apply {
-                    gravity = android.view.Gravity.CENTER
-                    minWidth = 56.dp
-                    minHeight = 34.dp
-                    setPadding(12.dp, 0, 12.dp, 0)
-                    textSize = 13f
-                    setTextColor(themePrimaryTextColor())
-                    typeface = this@BubbleManageActivity.uiTypeface()
-                    background = ContextCompat.getDrawable(itemRoot.context, R.drawable.bg_action_button)
-                    foreground = itemRoot.context.obtainStyledAttributes(
-                        intArrayOf(android.R.attr.selectableItemBackground)
-                    ).use { it.getDrawable(0) }
-                    isClickable = true
-                    isFocusable = true
-                }
+            private fun createActionButton(): TextView = TextView(itemRoot.context).apply {
+                gravity = android.view.Gravity.CENTER
+                minWidth = 56.dp
+                minHeight = 34.dp
+                setPadding(12.dp, 0, 12.dp, 0)
+                textSize = 13f
+                setTextColor(themePrimaryTextColor())
+                typeface = this@BubbleManageActivity.uiTypeface()
+                background = ContextCompat.getDrawable(itemRoot.context, R.drawable.bg_action_button)
+                foreground = itemRoot.context.obtainStyledAttributes(
+                    intArrayOf(android.R.attr.selectableItemBackground),
+                ).use { it.getDrawable(0) }
+                isClickable = true
+                isFocusable = true
             }
 
             fun bind(entry: BubblePackageManager.Entry) {
@@ -905,27 +922,21 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
         }
     }
 
-    private fun sourceLabel(source: BubblePackageManager.Source): String {
-        return when (source) {
-            BubblePackageManager.Source.BUILTIN -> getString(R.string.bubble_source_builtin)
-            BubblePackageManager.Source.LOCAL -> getString(R.string.bubble_source_local)
-        }
+    private fun sourceLabel(source: BubblePackageManager.Source): String = when (source) {
+        BubblePackageManager.Source.BUILTIN -> getString(R.string.bubble_source_builtin)
+        BubblePackageManager.Source.LOCAL -> getString(R.string.bubble_source_local)
     }
 
-    private fun themePrimaryTextColor(): Int {
-        return ContextCompat.getColor(this, R.color.primaryText)
-    }
+    private fun themePrimaryTextColor(): Int = ContextCompat.getColor(this, R.color.primaryText)
 
-    private fun themeSecondaryTextColor(): Int {
-        return ContextCompat.getColor(this, R.color.secondaryText)
-    }
+    private fun themeSecondaryTextColor(): Int = ContextCompat.getColor(this, R.color.secondaryText)
 
     private enum class Action(@StringRes val titleRes: Int) {
         APPLY(R.string.apply),
         EDIT(R.string.edit),
         EXPORT(R.string.export_str),
         SHARE(R.string.share),
-        DELETE(R.string.delete)
+        DELETE(R.string.delete),
     }
 
     private val Int.dp: Int get() = (this * resources.displayMetrics.density).toInt()

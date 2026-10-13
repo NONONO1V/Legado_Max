@@ -14,7 +14,6 @@ import androidx.annotation.StyleRes
 import androidx.appcompat.widget.Toolbar
 import androidx.core.graphics.alpha
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.children
 import com.google.android.material.appbar.AppBarLayout
 import io.legado.app.R
 import io.legado.app.constant.Theme
@@ -27,7 +26,7 @@ import splitties.views.topPadding
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 class TitleBar @JvmOverloads constructor(
     context: Context,
-    attrs: AttributeSet? = null
+    attrs: AttributeSet? = null,
 ) : AppBarLayout(context, attrs) {
 
     val toolbar: Toolbar
@@ -65,8 +64,10 @@ class TitleBar @JvmOverloads constructor(
 
     init {
         val a = context.obtainStyledAttributes(
-            attrs, R.styleable.TitleBar,
-            R.attr.titleBarStyle, 0
+            attrs,
+            R.styleable.TitleBar,
+            R.attr.titleBarStyle,
+            0,
         )
         navigationIconTint = a.getColorStateList(R.styleable.TitleBar_navigationIconTint)
         navigationIconTintMode = a.getInt(R.styleable.TitleBar_navigationIconTintMode, 9)
@@ -105,7 +106,7 @@ class TitleBar @JvmOverloads constructor(
             if (a.hasValue(R.styleable.TitleBar_titleTextAppearance)) {
                 this.setTitleTextAppearance(
                     context,
-                    a.getResourceId(R.styleable.TitleBar_titleTextAppearance, 0)
+                    a.getResourceId(R.styleable.TitleBar_titleTextAppearance, 0),
                 )
             }
 
@@ -116,7 +117,7 @@ class TitleBar @JvmOverloads constructor(
             if (a.hasValue(R.styleable.TitleBar_subtitleTextAppearance)) {
                 this.setSubtitleTextAppearance(
                     context,
-                    a.getResourceId(R.styleable.TitleBar_subtitleTextAppearance, 0)
+                    a.getResourceId(R.styleable.TitleBar_subtitleTextAppearance, 0),
                 )
             }
 
@@ -124,34 +125,35 @@ class TitleBar @JvmOverloads constructor(
                 this.setSubtitleTextColor(a.getColor(R.styleable.TitleBar_subtitleTextColor, -0x1))
             }
 
-
-            if (a.hasValue(R.styleable.TitleBar_contentInsetLeft)
-                || a.hasValue(R.styleable.TitleBar_contentInsetRight)
+            if (a.hasValue(R.styleable.TitleBar_contentInsetLeft) ||
+                a.hasValue(R.styleable.TitleBar_contentInsetRight)
             ) {
                 this.setContentInsetsAbsolute(
                     a.getDimensionPixelSize(R.styleable.TitleBar_contentInsetLeft, 0),
-                    a.getDimensionPixelSize(R.styleable.TitleBar_contentInsetRight, 0)
+                    a.getDimensionPixelSize(R.styleable.TitleBar_contentInsetRight, 0),
                 )
             }
 
-            if (a.hasValue(R.styleable.TitleBar_contentInsetStart)
-                || a.hasValue(R.styleable.TitleBar_contentInsetEnd)
+            if (a.hasValue(R.styleable.TitleBar_contentInsetStart) ||
+                a.hasValue(R.styleable.TitleBar_contentInsetEnd)
             ) {
                 this.setContentInsetsRelative(
                     a.getDimensionPixelSize(R.styleable.TitleBar_contentInsetStart, 0),
-                    a.getDimensionPixelSize(R.styleable.TitleBar_contentInsetEnd, 0)
+                    a.getDimensionPixelSize(R.styleable.TitleBar_contentInsetEnd, 0),
                 )
             }
 
             if (a.hasValue(R.styleable.TitleBar_contentInsetStartWithNavigation)) {
                 this.contentInsetStartWithNavigation = a.getDimensionPixelOffset(
-                    R.styleable.TitleBar_contentInsetStartWithNavigation, 0
+                    R.styleable.TitleBar_contentInsetStartWithNavigation,
+                    0,
                 )
             }
 
             if (a.hasValue(R.styleable.TitleBar_contentInsetEndWithActions)) {
                 this.contentInsetEndWithActions = a.getDimensionPixelOffset(
-                    R.styleable.TitleBar_contentInsetEndWithActions, 0
+                    R.styleable.TitleBar_contentInsetEndWithActions,
+                    0,
                 )
             }
 
@@ -268,7 +270,7 @@ class TitleBar @JvmOverloads constructor(
 
     override fun setBackgroundColor(color: Int) {
         if (color.alpha < 255) {
-            //这里不能改为0f,改为0f在横屏模式下文字和图标颜色会变
+            // 这里不能改为0f,改为0f在横屏模式下文字和图标颜色会变
             elevation = 0.1f
         }
         super.setBackgroundColor(color)
@@ -277,7 +279,7 @@ class TitleBar @JvmOverloads constructor(
     override fun setBackground(background: Drawable?) {
         if (background is ColorDrawable) {
             if (background.alpha < 255) {
-                //这里不能改为0f,改为0f在横屏模式下文字和图标颜色会变
+                // 这里不能改为0f,改为0f在横屏模式下文字和图标颜色会变
                 elevation = 0.1f
             }
         }
@@ -302,5 +304,4 @@ class TitleBar @JvmOverloads constructor(
             }
         }
     }
-
 }

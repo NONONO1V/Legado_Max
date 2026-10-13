@@ -37,32 +37,23 @@ class AppViewInflater : AppCompatViewInflater() {
         applyUiTypeface(context.uiTypeface())
     }
 
-    override fun createTextView(context: Context, attrs: AttributeSet) =
-        super.createTextView(context, attrs).withUiFont(context, attrs)
+    override fun createTextView(context: Context, attrs: AttributeSet) = super.createTextView(context, attrs).withUiFont(context, attrs)
 
-    override fun createButton(context: Context, attrs: AttributeSet) =
-        super.createButton(context, attrs).withUiFont(context, attrs)
+    override fun createButton(context: Context, attrs: AttributeSet) = super.createButton(context, attrs).withUiFont(context, attrs)
 
-    override fun createEditText(context: Context, attrs: AttributeSet) =
-        super.createEditText(context, attrs).withUiFont(context, attrs)
+    override fun createEditText(context: Context, attrs: AttributeSet) = super.createEditText(context, attrs).withUiFont(context, attrs)
 
-    override fun createCheckBox(context: Context, attrs: AttributeSet) =
-        super.createCheckBox(context, attrs).withUiFont(context, attrs)
+    override fun createCheckBox(context: Context, attrs: AttributeSet) = super.createCheckBox(context, attrs).withUiFont(context, attrs)
 
-    override fun createRadioButton(context: Context, attrs: AttributeSet) =
-        super.createRadioButton(context, attrs).withUiFont(context, attrs)
+    override fun createRadioButton(context: Context, attrs: AttributeSet) = super.createRadioButton(context, attrs).withUiFont(context, attrs)
 
-    override fun createCheckedTextView(context: Context, attrs: AttributeSet) =
-        super.createCheckedTextView(context, attrs).withUiFont(context, attrs)
+    override fun createCheckedTextView(context: Context, attrs: AttributeSet) = super.createCheckedTextView(context, attrs).withUiFont(context, attrs)
 
-    override fun createAutoCompleteTextView(context: Context, attrs: AttributeSet) =
-        super.createAutoCompleteTextView(context, attrs).withUiFont(context, attrs)
+    override fun createAutoCompleteTextView(context: Context, attrs: AttributeSet) = super.createAutoCompleteTextView(context, attrs).withUiFont(context, attrs)
 
-    override fun createMultiAutoCompleteTextView(context: Context, attrs: AttributeSet) =
-        super.createMultiAutoCompleteTextView(context, attrs).withUiFont(context, attrs)
+    override fun createMultiAutoCompleteTextView(context: Context, attrs: AttributeSet) = super.createMultiAutoCompleteTextView(context, attrs).withUiFont(context, attrs)
 
-    override fun createToggleButton(context: Context, attrs: AttributeSet) =
-        super.createToggleButton(context, attrs).withUiFont(context, attrs)
+    override fun createToggleButton(context: Context, attrs: AttributeSet) = super.createToggleButton(context, attrs).withUiFont(context, attrs)
 
     /**
      * 自定义控件（XML 里写全限定名或 `class` 属性）也在这里造，

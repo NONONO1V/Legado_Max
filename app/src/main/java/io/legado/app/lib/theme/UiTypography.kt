@@ -18,12 +18,10 @@ import io.legado.app.utils.dpToPx
  * 范围是**整个界面**（含标题栏、区块标题），不含阅读正文——正文走
  * `ChapterProvider.getTypeface()` + `ReadBookConfig.textFont`，是自绘且另有配置。
  */
-fun Context.uiTypeface(): Typeface {
-    return UiFontStore.typeface() ?: when (AppConfig.systemTypefaces) {
-        1 -> Typeface.SERIF
-        2 -> Typeface.MONOSPACE
-        else -> Typeface.SANS_SERIF
-    }
+fun Context.uiTypeface(): Typeface = UiFontStore.typeface() ?: when (AppConfig.systemTypefaces) {
+    1 -> Typeface.SERIF
+    2 -> Typeface.MONOSPACE
+    else -> Typeface.SANS_SERIF
 }
 
 /**
