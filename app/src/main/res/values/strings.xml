@@ -1257,6 +1257,8 @@
     <string name="del_login_header">del login header</string>
     <string name="show_login_header">show login header</string>
     <string name="login_header">login header</string>
+    <string name="ui_font">interface font</string>
+    <string name="ui_font_unset">not set, follow system font</string>
     <string name="font_scale">font scale</string>
     <string name="font_scale_summary">font scale:%d</string>
     <string name="search_content_size">search result</string>

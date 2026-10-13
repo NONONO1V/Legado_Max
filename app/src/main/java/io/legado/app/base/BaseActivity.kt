@@ -26,8 +26,10 @@ import io.legado.app.constant.Theme
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.ThemeConfig
 import io.legado.app.lib.theme.ThemeStore
+import io.legado.app.lib.theme.applyUiTypefaceDeep
 import io.legado.app.lib.theme.backgroundColor
 import io.legado.app.lib.theme.primaryColor
+import io.legado.app.lib.theme.uiTypeface
 import io.legado.app.model.ReadBook
 import io.legado.app.service.BaseReadAloudService
 import io.legado.app.ui.book.read.ReadBookActivity
@@ -105,6 +107,9 @@ abstract class BaseActivity<VB : ViewBinding>(
         setContentView(binding.root)
         findViewById<ViewGroup>(android.R.id.content)?.let {
             readAloudMiniBarController = ReadAloudMiniBarController(this, this, it)
+            // 界面字体第 3 层：XML 膨胀期注入只覆盖走 inflater 的控件，
+            // 代码 new 出来的 TextView 靠挂载后递归一遍补上（post 保证在 onActivityCreated 之后）
+            it.post { it.applyUiTypefaceDeep(uiTypeface()) }
         }
         upBackgroundImage()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

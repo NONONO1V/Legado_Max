@@ -54,6 +54,12 @@
             app:iconSpaceReserved="false" />
 
         <io.legado.app.lib.prefs.Preference
+            android:key="uiFont"
+            android:summary="@string/ui_font_unset"
+            android:title="@string/ui_font"
+            app:iconSpaceReserved="false" />
+
+        <io.legado.app.lib.prefs.Preference
             android:key="fontScale"
             android:summary="@string/font_scale_summary"
             android:title="@string/font_scale"

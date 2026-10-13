@@ -15,12 +15,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import io.legado.app.R
 import io.legado.app.constant.AppConst
+import io.legado.app.constant.AppLog
 import io.legado.app.constant.PreferKey
 import io.legado.app.databinding.DialogEditTextBinding
 import io.legado.app.databinding.DialogImageBlurringBinding
 import io.legado.app.help.LauncherIconHelp
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.ThemeConfig
+import io.legado.app.help.config.UiFontStore
 import io.legado.app.help.http.addHeaders
 import io.legado.app.help.http.newCallResponse
 import io.legado.app.help.http.okHttpClient
@@ -37,6 +39,7 @@ import io.legado.app.ui.config.NavigationBarManageActivity
 import io.legado.app.ui.config.ShareNoteTemplateManageActivity
 import io.legado.app.ui.config.TopBarManageActivity
 import io.legado.app.ui.file.HandleFileContract
+import io.legado.app.ui.font.FontSelectDialog
 import io.legado.app.ui.config.theme.manage.ThemeManageActivity
 import io.legado.app.ui.config.theme.legacy.appTheme.ApplicationThemeActivity
 import io.legado.app.ui.widget.number.NumberPickerDialog
@@ -56,11 +59,13 @@ import io.legado.app.utils.putPrefString
 import io.legado.app.utils.readUri
 import io.legado.app.utils.removePref
 import io.legado.app.utils.setEdgeEffectColor
+import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
 import java.io.FileOutputStream
+import java.net.URLDecoder
 
 /**
  * 主题配置 Fragment（旧版 PreferenceFragment 实现）。
@@ -74,7 +79,8 @@ import java.io.FileOutputStream
 class ThemeConfigFragment :
     PreferenceFragment(),
     SharedPreferences.OnSharedPreferenceChangeListener,
-    MenuProvider {
+    MenuProvider,
+    FontSelectDialog.CallBack {
 
     private val requestCodeBgLight = 121
     private val requestCodeBgDark = 122
@@ -106,6 +112,7 @@ class ThemeConfigFragment :
         upPreferenceSummary(PreferKey.bgImageN, getPrefString(PreferKey.bgImageN))
         upPreferenceSummary(PreferKey.barElevation, AppConfig.elevation.toString())
         upPreferenceSummary(PreferKey.fontScale)
+        upPreferenceSummary(PreferKey.uiFont)
         findPreference<ColorPreference>(PreferKey.cBackground)?.let {
             it.onSaveColor = { color ->
                 if (!ColorUtils.isColorLight(color)) {
@@ -271,6 +278,12 @@ class ThemeConfigFragment :
                     recreateActivities()
                 }
 
+            PreferKey.uiFont -> showDialogFragment<FontSelectDialog> {
+                // 场景与「规则字体」一致：菜单里的"系统字体"意为清除自定义字体，
+                // 不去改全局 systemTypefaces（那是阅读正文字体那边的设置）
+                putBoolean(FontSelectDialog.ARG_FOR_RULE, true)
+            }
+
             PreferKey.fontScale -> NumberPickerDialog(requireContext())
                 .setTitle(getString(R.string.font_scale))
                 .setMaxValue(16)
@@ -310,6 +323,40 @@ class ThemeConfigFragment :
             }
         }
         return super.onPreferenceTreeClick(preference)
+    }
+
+    // FontAdapter 只取最后一段文件名做勾选比对，所以给展示名而不是私有副本路径
+    override val curFontPath: String
+        get() = AppConfig.uiFontName
+
+    /**
+     * 字体选择回调：[path] 为空表示恢复系统字体，否则装成私有副本后重建界面。
+     *
+     * 安装是 IO + 逐字缺字检测，走协程；失败只提示不改配置。
+     */
+    override fun selectFont(path: String) {
+        if (path.isEmpty()) {
+            UiFontStore.clear()
+            upPreferenceSummary(PreferKey.uiFont)
+            recreateActivities()
+            return
+        }
+        val name = runCatching { URLDecoder.decode(path, "utf-8") }.getOrDefault(path)
+            .substringAfterLast('/')
+            .substringAfterLast(':')
+        val context = requireContext().applicationContext
+        lifecycleScope.launch {
+            appCtx.toastOnUi("正在应用字体…")
+            UiFontStore.install(context, path, name)
+                .onSuccess {
+                    if (!isAdded) return@onSuccess
+                    upPreferenceSummary(PreferKey.uiFont)
+                    recreateActivities()
+                }.onFailure {
+                    AppLog.put("应用界面字体失败\n${it.localizedMessage}", it)
+                    if (isAdded) toastOnUi(it.localizedMessage ?: "字体应用失败")
+                }
+        }
     }
 
     /**
@@ -462,6 +509,15 @@ class ThemeConfigFragment :
             PreferKey.fontScale -> {
                 val fontScale = requireContext().getPrefInt(PreferKey.fontScale, 10)
                 preference.summary = getString(R.string.font_scale_summary, fontScale)
+            }
+
+            PreferKey.uiFont -> {
+                val name = AppConfig.uiFontName
+                preference.summary = if (name.isBlank()) {
+                    getString(R.string.ui_font_unset)
+                } else {
+                    name
+                }
             }
 
             PreferKey.bgImage,

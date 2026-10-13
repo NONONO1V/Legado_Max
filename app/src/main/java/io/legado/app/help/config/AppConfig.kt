@@ -675,6 +675,20 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
             appCtx.putPrefInt(PreferKey.systemTypefaces, value)
         }
 
+    /** 自定义界面字体（私有副本绝对路径）；空串表示未设置，回退到 [systemTypefaces] */
+    var uiFontPath: String
+        get() = appCtx.getPrefString(PreferKey.uiFontPath) ?: ""
+        set(value) {
+            appCtx.putPrefString(PreferKey.uiFontPath, value)
+        }
+
+    /** 自定义界面字体的展示名，用于设置项摘要 */
+    var uiFontName: String
+        get() = appCtx.getPrefString(PreferKey.uiFontName) ?: ""
+        set(value) {
+            appCtx.putPrefString(PreferKey.uiFontName, value)
+        }
+
     var elevation: Int
         get() = if (isEInkMode) {
             0

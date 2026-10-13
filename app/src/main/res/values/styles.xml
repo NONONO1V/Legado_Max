@@ -47,6 +47,8 @@
         <item name="android:popupMenuStyle">@style/Style.PopupMenu</item>
         <item name="android:statusBarColor">@color/transparent</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <!-- 界面字体第 1 层：XML 膨胀期注入，所有继承本主题的主题都覆盖到 -->
+        <item name="viewInflaterClass">io.legado.app.ui.theme.AppViewInflater</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay.Light" parent="ThemeOverlay.AppCompat.Light">
@@ -93,6 +95,8 @@
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowAnimationStyle">@null</item>
+        <!-- 权限申请页不继承 Base.AppTheme，单独挂一次 inflater -->
+        <item name="viewInflaterClass">io.legado.app.ui.theme.AppViewInflater</item>
     </style>
 
     <style name="ToolbarTitle" parent="@style/TextAppearance.Widget.AppCompat.Toolbar.Title">

@@ -40,7 +40,7 @@ import io.legado.app.lib.dialogs.alert
 import io.legado.app.lib.dialogs.selector
 import io.legado.app.lib.theme.UiCorner
 import io.legado.app.lib.theme.accentColor
-import io.legado.app.lib.theme.applyUiBodyTypefaceDeep
+import io.legado.app.lib.theme.applyUiTypefaceDeep
 import io.legado.app.lib.theme.applyUiLabelStyle
 import io.legado.app.lib.theme.applyUiSectionTitleStyle
 import io.legado.app.lib.theme.uiTypeface
@@ -151,7 +151,7 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
         )
         tvAddTheme.setOnClickListener { showAddActions() }
         tvAddTheme.applyNavigationBarMargin(withInitialMargin = true)
-        root.applyUiBodyTypefaceDeep(uiTypeface())
+        root.applyUiTypefaceDeep(uiTypeface())
     }
 
     override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
@@ -345,7 +345,7 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
             orientation = LinearLayout.VERTICAL
             setPadding(2.dp, 2.dp, 2.dp, 4.dp)
             populateEditView(this)
-            applyUiBodyTypefaceDeep(this@BubbleManageActivity.uiTypeface())
+            applyUiTypefaceDeep(this@BubbleManageActivity.uiTypeface())
         }
     }
 
@@ -639,7 +639,7 @@ class BubbleManageActivity : BaseActivity<ActivityThemeManageBinding>(), ColorPi
         }
         container.addView(textContainer)
         container.addView(switch)
-        container.applyUiBodyTypefaceDeep(uiTypeface())
+        container.applyUiTypefaceDeep(uiTypeface())
         return container
     }
 

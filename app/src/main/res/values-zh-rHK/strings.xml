@@ -1063,6 +1063,8 @@
     <string name="del_login_header">刪除登錄頭</string>
     <string name="show_login_header">查看登錄頭</string>
     <string name="login_header">登錄頭</string>
+    <string name="ui_font">介面字體</string>
+    <string name="ui_font_unset">未設定，跟隨系統字體</string>
     <string name="font_scale">字體大小</string>
     <string name="font_scale_summary">當前字亂大小:%d</string>
     <string name="tts_speech_reduce">語速减</string>

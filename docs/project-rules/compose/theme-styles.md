@@ -63,7 +63,7 @@ Glide.with(context)
 > 档位载体：`ui/theme/AppTypography.kt` 的 `rememberAppTypography()`（**已建立**），经 `LegadoTheme` 注入 `MaterialTheme.typography`；字号与权重沿用 Material3 默认档位，本项目不另设字号体系。
 
 - **必须**通过 `MaterialTheme.typography.xxx` 语义档位取字体样式；**禁止**在 Composable 内直接调 `FontFamily` 构建、裸写 `fontSize = X.sp`（动态字号豁免见本节末）。
-- **界面字体**（用户设置的衬线/等宽，`AppConfig.systemTypefaces`）由 `rememberAppTypography()` 织入 body / label 档位，title / headline / display 档位保持系统默认——与 View 侧 `applyUiBodyTypefaceDeep()` 跳过标题角色同语义。所有 Compose 界面必须经 `LegadoTheme` 包裹（当前无绕过点），禁止自行 `MaterialTheme(colorScheme = ...)` 把排版注入甩掉。
+- **界面字体**由 `rememberAppTypography()` 织入**全部 15 个档位**（display / headline / title / body / label），**没有"标题保持系统默认"这类例外**：取值是「自定义界面字体（`UiFontStore`，入口在主题设置「界面字体」）优先，否则 `AppConfig.systemTypefaces` 的衬线/等宽」，与 View 侧 `applyUiTypefaceDeep()` 不跳过任何控件同语义。所有 Compose 界面必须经 `LegadoTheme` 包裹（当前无绕过点），禁止自行 `MaterialTheme(colorScheme = ...)` 把排版注入甩掉。
 - **字号选档对照**（裸 `13.sp` 这类档位外取值，迁移时按就近原则归档；最小档位到 `labelSmall`）：
 
   | 档位          | 字号 | 默认权重 | 用途                         |

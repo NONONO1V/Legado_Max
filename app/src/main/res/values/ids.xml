@@ -22,7 +22,8 @@
     <item name="inline_content_lock_parent_scroll" type="id" />
     <item name="explore_source_url" type="id" />
     <item name="explore_content_signature" type="id" />
-    <item name="ui_title_typeface_role" type="id" />
+    <!-- XML 声明等宽的控件（如规则搜索结果），全局字体不覆盖它 -->
+    <item name="ui_monospace_lock" type="id" />
     <item name="bubble_preview_key" type="id" />
 
 </resources>

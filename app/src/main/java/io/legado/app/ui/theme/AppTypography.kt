@@ -3,36 +3,42 @@ package io.legado.app.ui.theme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.text.font.FontFamily
-import io.legado.app.help.config.AppConfig
+import io.legado.app.lib.theme.uiTypeface
+import splitties.init.appCtx
 
 /**
  * 应用排版档位，经 [LegadoTheme] 注入 `MaterialTheme.typography`（规范见 theme-styles.md §7.4）。
  *
  * 字号与权重沿用 Material3 默认档位，本项目不另设字号体系。这里只织入一件事：
- * 用户「界面字体」设置（[AppConfig.systemTypefaces]，0 默认 / 1 衬线 / 2 等宽）——
- * body / label 档位跟随用户字体；title / headline / display 保持系统默认，
- * 与 View 侧 [io.legado.app.lib.theme.applyUiBodyTypefaceDeep] 跳过标题角色同语义。
+ * 用户「界面字体」设置（自定义字体优先，否则 [io.legado.app.help.config.AppConfig.systemTypefaces]
+ * 0 默认 / 1 衬线 / 2 等宽）——**15 个档位全部注入**，与 View 侧
+ * [io.legado.app.lib.theme.applyUiTypefaceDeep] 一样不再区分标题/正文角色。
  *
  * 设置没有可观察源：改设置后靠主题应用/页面重建带来的重组读到新值，
  * 与 View 侧需重新遍历 View 树生效是同一限制。
  */
 @Composable
 fun rememberAppTypography(): Typography {
-    val bodyFontFamily = when (AppConfig.systemTypefaces) {
-        1 -> FontFamily.Serif
-        2 -> FontFamily.Monospace
-        else -> FontFamily.Default
-    }
-    return remember(bodyFontFamily) {
+    val typeface = appCtx.uiTypeface()
+    return remember(typeface) {
+        val fontFamily = uiFontFamily(typeface)
         val m3 = Typography()
         m3.copy(
-            bodyLarge = m3.bodyLarge.copy(fontFamily = bodyFontFamily),
-            bodyMedium = m3.bodyMedium.copy(fontFamily = bodyFontFamily),
-            bodySmall = m3.bodySmall.copy(fontFamily = bodyFontFamily),
-            labelLarge = m3.labelLarge.copy(fontFamily = bodyFontFamily),
-            labelMedium = m3.labelMedium.copy(fontFamily = bodyFontFamily),
-            labelSmall = m3.labelSmall.copy(fontFamily = bodyFontFamily),
+            displayLarge = m3.displayLarge.copy(fontFamily = fontFamily),
+            displayMedium = m3.displayMedium.copy(fontFamily = fontFamily),
+            displaySmall = m3.displaySmall.copy(fontFamily = fontFamily),
+            headlineLarge = m3.headlineLarge.copy(fontFamily = fontFamily),
+            headlineMedium = m3.headlineMedium.copy(fontFamily = fontFamily),
+            headlineSmall = m3.headlineSmall.copy(fontFamily = fontFamily),
+            titleLarge = m3.titleLarge.copy(fontFamily = fontFamily),
+            titleMedium = m3.titleMedium.copy(fontFamily = fontFamily),
+            titleSmall = m3.titleSmall.copy(fontFamily = fontFamily),
+            bodyLarge = m3.bodyLarge.copy(fontFamily = fontFamily),
+            bodyMedium = m3.bodyMedium.copy(fontFamily = fontFamily),
+            bodySmall = m3.bodySmall.copy(fontFamily = fontFamily),
+            labelLarge = m3.labelLarge.copy(fontFamily = fontFamily),
+            labelMedium = m3.labelMedium.copy(fontFamily = fontFamily),
+            labelSmall = m3.labelSmall.copy(fontFamily = fontFamily),
         )
     }
 }

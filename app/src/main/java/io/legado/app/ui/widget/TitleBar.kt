@@ -18,6 +18,7 @@ import androidx.core.view.children
 import com.google.android.material.appbar.AppBarLayout
 import io.legado.app.R
 import io.legado.app.constant.Theme
+import io.legado.app.lib.theme.applyUiTypefaceDeep
 import io.legado.app.utils.activity
 import io.legado.app.utils.setOnApplyWindowInsetsListenerCompat
 import splitties.views.bottomPadding
@@ -38,6 +39,7 @@ class TitleBar @JvmOverloads constructor(
         set(title) {
             if (toolbar.title != title) {
                 toolbar.title = title
+                applyTitleBarTypeface()
             }
         }
 
@@ -46,6 +48,7 @@ class TitleBar @JvmOverloads constructor(
         set(subtitle) {
             if (toolbar.subtitle != subtitle) {
                 toolbar.subtitle = subtitle
+                applyTitleBarTypeface()
             }
         }
 
@@ -159,6 +162,7 @@ class TitleBar @JvmOverloads constructor(
             if (!subtitleText.isNullOrBlank()) {
                 this.subtitle = subtitleText
             }
+            applyTitleBarTypeface()
 
             if (a.hasValue(R.styleable.TitleBar_contentLayout)) {
                 inflate(context, a.getResourceId(R.styleable.TitleBar_contentLayout, 0), this)
@@ -209,6 +213,16 @@ class TitleBar @JvmOverloads constructor(
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         attachToActivity()
+        // 菜单项由代码创建，不经过 XML 膨胀；挂载后再补一次才覆盖得到
+        post { applyTitleBarTypeface() }
+    }
+
+    /**
+     * Toolbar 的标题/副标题 TextView 是它在 setTitle 时才用代码创建的，
+     * 既不过 XML 膨胀期注入，也可能晚于补漏层的遍历时机，所以每次改标题都要补一次。
+     */
+    private fun applyTitleBarTypeface() {
+        toolbar.applyUiTypefaceDeep()
     }
 
     fun setNavigationOnClickListener(clickListener: ((View) -> Unit)) {
@@ -217,10 +231,12 @@ class TitleBar @JvmOverloads constructor(
 
     fun setTitle(titleId: Int) {
         toolbar.setTitle(titleId)
+        applyTitleBarTypeface()
     }
 
     fun setSubTitle(subtitleId: Int) {
         toolbar.setSubtitle(subtitleId)
+        applyTitleBarTypeface()
     }
 
     fun setTitleTextColor(@ColorInt color: Int) {

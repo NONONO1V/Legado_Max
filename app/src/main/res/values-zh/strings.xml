@@ -1256,6 +1256,8 @@
     <string name="del_login_header">删除登录头</string>
     <string name="show_login_header">查看登录头</string>
     <string name="login_header">登录头</string>
+    <string name="ui_font">界面字体</string>
+    <string name="ui_font_unset">未设置，跟随系统字体</string>
     <string name="font_scale">字体大小</string>
     <string name="font_scale_summary">当前字体大小：%d</string>
     <string name="tts_speech_reduce">语速减</string>
