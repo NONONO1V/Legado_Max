@@ -32,6 +32,7 @@ import io.legado.app.R
 import io.legado.app.data.entities.BaseSource
 import io.legado.app.data.entities.BookSource
 import io.legado.app.help.WebCacheManager
+import io.legado.app.help.config.UiFontStore
 import io.legado.app.help.webView.PooledWebView
 import io.legado.app.help.webView.Scope
 import io.legado.app.help.webView.WebJsExtensions
@@ -419,9 +420,13 @@ private fun buildExploreUseWebPageInjection(pageKey: String, initialPage: Int): 
  * 透明背景是必须的——发现页的壁纸由主界面承载，WebView 自己画白底会盖住壁纸。
  */
 private fun wrapExploreUseWebHtml(html: String, source: BookSource?, pageJs: String): String {
+    // 界面字体：WebView 走自己的渲染管线，只能靠注入 @font-face 生效
+    // （详见 UiFontStore.webFontCss）
+    val fontCss = UiFontStore.webFontCss().orEmpty()
     val inlineStyle = """
         <style>
         html,body{background:transparent;}
+        $fontCss
         </style>
     """.trimIndent()
     val injection = buildString {

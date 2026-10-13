@@ -7,6 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import io.legado.app.data.entities.BaseSource
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.CacheManager
+import io.legado.app.help.config.UiFontStore
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.model.SharedJsScope
 import io.legado.app.model.analyzeRule.AnalyzeRule.Companion.setCoroutineContext
@@ -285,13 +286,21 @@ class WebJsExtensions(
             }
         }
 
+        /**
+         * 给 useWeb 内联渲染的 HTML 拼装注入内容（JS 桥 + 界面字体 CSS）。
+         *
+         * 界面字体只能在这里注入：WebView 有自己的渲染管线，View 侧的
+         * inflater / 递归补漏都管不到它，[UiFontStore.webFontCss] 产出的
+         * `@font-face` 是唯一入口。调用方都在 IO 线程拿结果，base64 编码不会卡主线程。
+         */
         fun wrapUseWebHtml(html: String, source: BaseSource?): String {
             val injection = buildUseWebInjection(source).trim()
+            val fontStyle = UiFontStore.webFontCss()?.let { "<style>\n$it\n</style>" }.orEmpty()
             if (injection.isEmpty()) {
-                return html
+                return if (fontStyle.isEmpty()) html else "$fontStyle\n$html"
             }
             val safeInjection = Regex("(?i)</script>").replace(injection, "<\\\\/script>")
-            return "<script>\n$safeInjection\n</script>\n$html"
+            return "<script>\n$safeInjection\n</script>\n$fontStyle\n$html"
         }
 
         val JS_INJECTION by lazy { """

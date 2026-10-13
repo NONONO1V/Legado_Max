@@ -5,6 +5,7 @@ import android.graphics.Typeface
 import android.graphics.fonts.Font
 import android.graphics.fonts.FontFamily
 import android.os.Build
+import android.util.Base64
 import android.util.LruCache
 import androidx.core.net.toUri
 import io.legado.app.exception.NoStackTraceException
@@ -13,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
+import java.lang.ref.SoftReference
 import java.security.MessageDigest
 
 /**
@@ -34,7 +36,15 @@ object UiFontStore {
 
     private const val DIRECTORY = "uiFont"
     private const val MAX_BYTES = 64L * 1024 * 1024
+    /**
+     * 内嵌进 WebView 的字体体积上限。字体要转成 base64 塞进 CSS，
+     * 再到 JVM 里是 UTF-16 String（约 2 倍），超限就不注入、让页面用自己的字体。
+     */
+    private const val MAX_WEB_FONT_BYTES = 8L * 1024 * 1024
+    private const val WEB_FONT_FAMILY = "LegadoUiFont"
     private val cache = LruCache<String, Typeface>(4)
+    @Volatile
+    private var webFontCssRef: SoftReference<String>? = null
 
     /** 已安装的自定义字体路径；空串表示未设置（回退到 [AppConfig.systemTypefaces]）。 */
     private val installedPath: String get() = AppConfig.uiFontPath
@@ -51,9 +61,47 @@ object UiFontStore {
         }
     }
 
+    /**
+     * useWeb 内联渲染（WebView）用的 `@font-face` CSS；未装字体或体积超限时返回 null。
+     *
+     * 为什么要把字体内嵌成 data URI：书源简介是
+     * `webView.loadDataWithBaseURL(bookUrl, html, ...)`，base URL 是书源的 http(s) 地址，
+     * `@font-face src: url(file://...)` 会被 WebView 按跨域拦掉；放开
+     * `setAllowUniversalAccessFromFileURLs` 等于让任意书源页面读本地文件，不能用。
+     * data URI 不受来源限制，是唯一既安全又能生效的路子。
+     *
+     * 只在 html/body 上用 `!important` 覆盖：页面里显式声明 font-family 的元素
+     * （图标字体之类）保持原样，不会被顶成豆腐块。
+     *
+     * 结果用 [SoftReference] 持有：base64 字符串可能十几 MB，内存紧张时允许被回收。
+     */
+    fun webFontCss(): String? {
+        val path = installedPath
+        if (path.isBlank()) return null
+        webFontCssRef?.get()?.let { return it }
+        val file = File(path)
+        if (!file.isFile || file.length() > MAX_WEB_FONT_BYTES) return null
+        val css = runCatching {
+            val base64 = Base64.encodeToString(file.readBytes(), Base64.NO_WRAP)
+            val format = if (file.extension.equals("otf", ignoreCase = true)) {
+                "opentype"
+            } else {
+                "truetype"
+            }
+            val mime = if (format == "opentype") "otf" else "ttf"
+            "@font-face{font-family:'$WEB_FONT_FAMILY';" +
+                "src:url(data:font/$mime;base64,$base64) format('$format');" +
+                "font-display:swap;}" +
+                "html,body{font-family:'$WEB_FONT_FAMILY',sans-serif !important;}"
+        }.getOrNull() ?: return null
+        webFontCssRef = SoftReference(css)
+        return css
+    }
+
     /** 配置变动后丢弃缓存，下次读取重新解码。 */
     fun invalidate() {
         synchronized(cache) { cache.evictAll() }
+        webFontCssRef = null
     }
 
     /**

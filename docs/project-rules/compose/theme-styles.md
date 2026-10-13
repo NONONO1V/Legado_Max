@@ -64,6 +64,7 @@ Glide.with(context)
 
 - **必须**通过 `MaterialTheme.typography.xxx` 语义档位取字体样式；**禁止**在 Composable 内直接调 `FontFamily` 构建、裸写 `fontSize = X.sp`（动态字号豁免见本节末）。
 - **界面字体**由 `rememberAppTypography()` 织入**全部 15 个档位**（display / headline / title / body / label），**没有"标题保持系统默认"这类例外**：取值是「自定义界面字体（`UiFontStore`，入口在主题设置「界面字体」）优先，否则 `AppConfig.systemTypefaces` 的衬线/等宽」，与 View 侧 `applyUiTypefaceDeep()` 不跳过任何控件同语义。所有 Compose 界面必须经 `LegadoTheme` 包裹（当前无绕过点），禁止自行 `MaterialTheme(colorScheme = ...)` 把排版注入甩掉。
+- **useWeb / WebView 内容**是第 5 层，上面四层全都管不到它：WebView 用自己的渲染管线，只认自己的 CSS。界面字体靠 `UiFontStore.webFontCss()` 产出的 `@font-face`（字体转 base64 内嵌成 data URI）随 HTML 一起注入，注入点是 `WebJsExtensions.wrapUseWebHtml()`（书籍详情简介、视频播放页）与 `ExploreUseWebView.wrapExploreUseWebHtml()`（发现页 useWeb）。**新增任何 `loadDataWithBaseURL` 渲染书源 HTML 的地方，都必须带上这段 CSS**，否则那块内容会停在页面自带字体上。之所以内嵌而不用 `file://`：base URL 是书源的 http(s) 地址，file 子资源会被 WebView 按跨域拦掉，而放开 `setAllowUniversalAccessFromFileURLs` 等于让任意书源页面读本地文件。
 - **字号选档对照**（裸 `13.sp` 这类档位外取值，迁移时按就近原则归档；最小档位到 `labelSmall`）：
 
   | 档位          | 字号 | 默认权重 | 用途                         |
